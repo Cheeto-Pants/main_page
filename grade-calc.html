@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculate Exam Grade</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+        }
+
+        /* Back Button Styling */
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            color: #2b6cb0;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+        .home-btn:hover { background: #e2e8f0; }
+
+        .container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 400px;
+            text-align: center;
+        }
+
+        h1 { color: #333; font-size: 24px; margin-bottom: 25px; }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+            background: #fafafa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+
+        .controls { display: flex; align-items: center; gap: 10px; }
+
+        input[type="number"] {
+            width: 70px; padding: 8px; border: 2px solid #ddd;
+            border-radius: 5px; font-size: 16px; text-align: center;
+        }
+
+        input[type="range"] { flex-grow: 1; cursor: pointer; }
+
+        button {
+            background-color: #2b6cb0; color: white; border: none; padding: 15px;
+            width: 100%; border-radius: 5px; font-size: 18px; font-weight: bold;
+            cursor: pointer; margin-top: 10px; transition: background 0.3s;
+        }
+        button:hover { background-color: #1a4971; }
+
+        #result {
+            margin-top: 25px; font-size: 18px; font-weight: bold; padding: 15px;
+            background-color: #e2e8f0; border-radius: 5px; display: none;
+        }
+
+        .safe { color: #276749; background-color: #c6f6d5 !important; }
+        .hard { color: #9c4221; background-color: #feebc8 !important; }
+        .impossible { color: #9b2c2c; background-color: #fed7d7 !important; }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="home-btn">← Back to Home</a>
+
+    <div class="container">
+        <h1>Calculate exam grade</h1>
+
+        <div class="input-group">
+            <label>Quarter 1 Grade</label>
+            <div class="controls">
+                <input type="number" id="q1Input" value="85" oninput="sync('q1Input', 'q1Slider')">
+                <input type="range" id="q1Slider" min="0" max="110" value="85" oninput="sync('q1Slider', 'q1Input')">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Quarter 2 Grade</label>
+            <div class="controls">
+                <input type="number" id="q2Input" value="85" oninput="sync('q2Input', 'q2Slider')">
+                <input type="range" id="q2Slider" min="0" max="110" value="85" oninput="sync('q2Slider', 'q2Input')">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label style="color:#2b6cb0;">Desired Semester Grade</label>
+            <div class="controls">
+                <input type="number" id="targetInput" value="90" oninput="sync('targetInput', 'targetSlider')">
+                <input type="range" id="targetSlider" min="50" max="100" value="90" oninput="sync('targetSlider', 'targetInput')">
+            </div>
+        </div>
+
+        <button onclick="calculate()">Calculate</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function sync(sourceId, targetId) {
+            document.getElementById(targetId).value = document.getElementById(sourceId).value;
+        }
+
+        function calculate() {
+            const q1 = parseFloat(document.getElementById('q1Input').value);
+            const q2 = parseFloat(document.getElementById('q2Input').value);
+            const target = parseFloat(document.getElementById('targetInput').value);
+            const resultBox = document.getElementById('result');
+            resultBox.style.display = "block";
+
+            if (isNaN(q1) || isNaN(q2) || isNaN(target)) {
+                resultBox.innerHTML = "Please enter all numbers.";
+                resultBox.className = "";
+                return;
+            }
+
+            let currentPoints = (q1 * 2) + (q2 * 2);
+            let goalPoints = target * 5;
+            let gradeNeeded = Math.round((goalPoints - currentPoints) * 10) / 10;
+
+            if (gradeNeeded > 100) {
+                resultBox.innerHTML = `You need: ${gradeNeeded}%<br><span style='font-size:14px; font-weight:normal'>(Impossible without extra credit)</span>`;
+                resultBox.className = "impossible";
+            } else if (gradeNeeded <= 0) {
+                resultBox.innerHTML = `You need: ${gradeNeeded}%<br><span style='font-size:14px; font-weight:normal'>(You're already safe!)</span>`;
+                resultBox.className = "safe";
+            } else {
+                resultBox.innerHTML = `You need: ${gradeNeeded}% on the exam`;
+                resultBox.className = gradeNeeded > 90 ? "hard" : "safe";
+            }
+        }
+    </script>
+
+</body>
+</html>

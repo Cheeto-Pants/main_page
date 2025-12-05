@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Game</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+    <h1>🧩 Sudoku</h1>
+
+    <div class="theory-banner" id="theoryBanner">
+        🧪 THEORY MODE - Test your hypothesis without penalties!
+    </div>
+
+    <div class="practice-banner" id="practiceBanner">
+        <span class="practice-banner-icon">🎯</span>
+        <span class="practice-banner-text">
+            PRACTICE MODE: <strong id="practiceTechniqueName">X-Wing</strong>
+        </span>
+        <button class="practice-info-btn" id="practiceInfoBtn">ℹ️ How to solve</button>
+        <button class="practice-exit-btn" id="practiceExitBtn">✕ Exit Practice</button>
+    </div>
+
+    <div class="difficulty-container">
+        <button class="difficulty-btn easy" data-difficulty="easy">Easy</button>
+        <button class="difficulty-btn medium active" data-difficulty="medium">Medium</button>
+        <button class="difficulty-btn hard" data-difficulty="hard">Hard</button>
+        <button class="difficulty-btn expert" data-difficulty="expert">Expert</button>
+        <button class="difficulty-btn master" data-difficulty="master">Master</button>
+        <button class="difficulty-btn extreme" data-difficulty="extreme">Extreme</button>
+        
+        <div class="practice-divider"></div>
+        
+        <div class="practice-dropdown">
+            <button class="practice-btn" id="practiceBtn">
+                🎯 Practice Strategy <span class="dropdown-arrow">▼</span>
+            </button>
+            <div class="practice-menu" id="practiceMenu">
+                <div class="practice-menu-header">Basic Techniques</div>
+                <button class="practice-option" data-technique="nakedSingle">Naked Single</button>
+                <button class="practice-option" data-technique="hiddenSingle">Hidden Single</button>
+                
+                <div class="practice-menu-header">Intermediate Techniques</div>
+                <button class="practice-option" data-technique="nakedPair">Naked Pair</button>
+                <button class="practice-option" data-technique="hiddenPair">Hidden Pair</button>
+                <button class="practice-option" data-technique="pointingPair">Pointing Pair</button>
+                <button class="practice-option" data-technique="boxLineReduction">Box/Line Reduction</button>
+                
+                <div class="practice-menu-header">Advanced Techniques</div>
+                <button class="practice-option" data-technique="nakedTriple">Naked Triple</button>
+                <button class="practice-option" data-technique="xWing">X-Wing</button>
+                <button class="practice-option" data-technique="yWing">Y-Wing</button>
+                <button class="practice-option" data-technique="swordfish">Swordfish</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-container">
+        <div class="setting-item">
+            <input type="checkbox" id="autoCheckToggle" checked>
+            <label for="autoCheckToggle">Auto-check answers</label>
+        </div>
+        <button class="check-answers-btn" id="checkAnswersBtn" style="display: none;">📋 Check Answers</button>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span>⏱️</span>
+            <span class="timer" id="timer">00:00</span>
+            <button class="pause-btn" id="pauseBtn">⏸️</button>
+        </div>
+        <div class="stat-item">
+            <span>❌</span>
+            <span>Mistakes: <span id="mistakes">0</span>/3</span>
+        </div>
+        <div class="stat-item">
+            <span>💡</span>
+            <span>Hints: <span id="hintsRemaining">3</span></span>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="board-wrapper">
+            <div class="board" id="board"></div>
+            <div class="ripple-overlay" id="rippleOverlay"></div>
+            <div class="pause-overlay" id="pauseOverlay" style="display: none;">
+                <div class="icon">⏸️</div>
+                <div class="text">Game Paused</div>
+                <button class="resume-btn" id="resumeBtn">Resume</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="number-pad" id="numberPad"></div>
+            <div class="action-buttons">
+                <button class="action-btn" id="notesBtn">✏️ Notes OFF</button>
+                <button class="action-btn auto-notes" id="autoNotesBtn">📝 Auto Notes</button>
+                <button class="action-btn" id="hintBtn">💡 Hint (3)</button>
+                <button class="action-btn" id="undoBtn">↩️ Undo</button>
+                <button class="action-btn" id="eraseBtn">🗑️ Erase</button>
+                <button class="action-btn" id="newGameBtn">🔄 New Game</button>
+            </div>
+
+            <div class="theory-buttons">
+                <button class="theory-btn enter" id="enterTheoryBtn">🧪 Enter Theory Mode</button>
+                <button class="theory-btn apply" id="applyTheoryBtn" disabled>✅ Apply Board</button>
+                <button class="theory-btn revert" id="revertTheoryBtn" disabled>↩️ Revert to Saved</button>
+            </div>
+
+            <div class="keyboard-info">
+                <strong>Keyboard Shortcuts:</strong>
+                1-9: Enter number<br>
+                N: Toggle notes<br>
+                Arrows: Navigate<br>
+                Delete: Erase<br>
+                Ctrl+Z: Undo<br>
+                T: Toggle Theory Mode<br>
+                ESC: Pause/Resume
+            </div>
+        </div>
+    </div>
+
+    <!-- Win Modal -->
+    <div class="modal-overlay" id="winModal" style="display: none;">
+        <div class="modal">
+            <div class="icon">🎉</div>
+            <h2>Congratulations!</h2>
+            <p>You completed the <span id="winDifficulty">medium</span> puzzle!</p>
+            <p class="stats">Time: <span id="winTime">00:00</span> | Mistakes: <span id="winMistakes">0</span></p>
+            <button class="play-again-btn" id="playAgainBtn">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Hint Modal -->
+    <div class="modal-overlay" id="hintModal" style="display: none;">
+        <div class="hint-modal">
+            <h3>💡 Hint</h3>
+            <div class="technique" id="hintTechnique">Naked Single</div>
+            <div class="explanation" id="hintExplanation"></div>
+            <div class="highlight-info" id="hintHighlight"></div>
+            <div class="no-hint-warning" id="noHintWarning" style="display: none;">
+                No logical technique found with your current notes. Try filling in more notes or use the button below to auto-fill all possible candidates.
+            </div>
+            <div class="btn-group">
+                <button class="close-btn" id="closeHintBtn">Got it!</button>
+                <button class="apply-btn" id="applyHintBtn">Apply & Close</button>
+                <button class="fill-notes-btn" id="fillNotesBtn">Fill All Notes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Apply Theory Modal -->
+    <div class="modal-overlay" id="confirmApplyModal" style="display: none;">
+        <div class="confirm-modal">
+            <h3>📋 Apply Theory Board?</h3>
+            <p>You are about to apply all changes made in Theory Mode to your actual game board.</p>
+            <div class="changes-summary" id="changesSummary"></div>
+            <p><strong>Note:</strong> Any numbers that conflict with Sudoku rules or are incorrect will be counted as mistakes.</p>
+            <div class="btn-group">
+                <button class="cancel-btn" id="cancelApplyBtn">Cancel</button>
+                <button class="confirm-btn" id="confirmApplyBtn">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Check Answers Modal -->
+    <div class="modal-overlay" id="checkModal" style="display: none;">
+        <div class="check-modal">
+            <h3>📋 Check Results</h3>
+            <div class="result" id="checkResult"></div>
+            <div class="btn-group">
+                <button class="modal-btn close-btn" id="closeCheckBtn">Close</button>
+                <button class="modal-btn reveal-btn" id="revealErrorsBtn">Reveal Errors</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technique Info Modal -->
+    <div class="modal-overlay" id="techniqueModal" style="display: none;">
+        <div class="technique-modal">
+            <h3 id="techniqueModalTitle">🎯 X-Wing</h3>
+            <div class="technique-description" id="techniqueDescription"></div>
+            <div class="technique-instructions" id="techniqueInstructions"></div>
+            <div class="btn-group">
+                <button class="close-btn" id="closeTechniqueBtn">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
