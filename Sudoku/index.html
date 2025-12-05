@@ -6,8 +6,53 @@
     <title>Sudoku Game</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <!-- Added Styles for the Home Button -->
+    <style>
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            color: #333;
+            background-color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 1000; /* Ensures it sits on top of everything */
+        }
+
+        .home-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            background-color: #f8f9fa;
+        }
+
+        /* Mobile adjustment to keep it from overlapping title */
+        @media (max-width: 600px) {
+            .home-btn {
+                top: 10px;
+                left: 10px;
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
 </head>
 <body>
+    
+    <!-- ADDED RETURN BUTTON HERE -->
+    <a href="../index.html" class="home-btn">
+        <span>🏠</span> Back to Home
+    </a>
+
     <h1>🧩 Sudoku</h1>
 
     <div class="theory-banner" id="theoryBanner">
