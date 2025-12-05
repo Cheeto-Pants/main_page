@@ -72,6 +72,30 @@
 <body>
 
     <h1>Welcome!</h1>
+    <!-- QUICK SEARCH BAR -->
+<div style="margin-bottom: 30px;">
+    <input type="text" id="quickUrl" placeholder="Quick Proxy (e.g. twitch.tv)" 
+           style="padding: 12px; border-radius: 20px; border: 1px solid #ccc; width: 250px; text-align: center;">
+    <button onclick="quickGo()" 
+            style="padding: 12px 20px; border-radius: 20px; background: #2b6cb0; color: white; border: none; cursor: pointer;">
+        Go 🚀
+    </button>
+</div>
+
+<script>
+    function quickGo() {
+        let url = document.getElementById('quickUrl').value;
+        if(url) {
+            // Sends the URL to the browser page
+            window.location.href = "Tools/browser.html?site=" + encodeURIComponent(url);
+        }
+    }
+    
+    // Allow Enter Key
+    document.getElementById('quickUrl').addEventListener("keypress", function(event) {
+        if (event.key === "Enter") quickGo();
+    });
+</script>
 
     <div class="menu">
         <!-- Button 1: Sudoku -->

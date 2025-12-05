@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Portal</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #2d3748;
+            overflow: hidden; /* Stop double scrollbars */
+        }
+
+        /* The Top Bar */
+        .address-bar {
+            background-color: #f7fafc;
+            padding: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .home-btn {
+            text-decoration: none;
+            font-size: 20px;
+            margin-right: 5px;
+            filter: grayscale(100%);
+            transition: 0.2s;
+        }
+        .home-btn:hover { filter: none; transform: scale(1.1); }
+
+        input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #cbd5e0;
+            font-size: 14px;
+            outline: none;
+        }
+        input:focus { border-color: #4299e1; }
+
+        button {
+            padding: 10px 20px;
+            background-color: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background-color: #2c5282; }
+
+        /* The Viewer Window */
+        iframe {
+            flex-grow: 1;
+            border: none;
+            background-color: white;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="address-bar">
+        <a href="../index.html" class="home-btn" title="Back to Menu">🏠</a>
+        <input type="text" id="urlInput" placeholder="Enter URL (e.g. wikipedia.org)">
+        <button onclick="loadUrl()">Go</button>
+    </div>
+
+    <iframe id="viewer" src="about:blank"></iframe>
+
+    <script>
+        // 🔴 PASTE YOUR GOOGLE SCRIPT URL BETWEEN THE QUOTES BELOW 🔴
+        const PROXY_URL = "https://script.google.com/a/macros/vhcsk12.com/s/AKfycbyxf2D9VnkQWUW423G-8WhNXMcxPyWUx6mu9eOAeilqEzKSZ6AuhSj6EGtQcYBwH9nF/exec";
+
+        function loadUrl() {
+            let target = document.getElementById('urlInput').value.trim();
+            const viewer = document.getElementById('viewer');
+
+            if (!target) return;
+
+            // 1. Check if the user is just searching for something (no dots)
+            if (!target.includes('.') || target.includes(' ')) {
+                // Use Bing for searches (often safer on school wifi than Google)
+                viewer.src = "https://www.bing.com/search?q=" + encodeURIComponent(target);
+                return;
+            }
+
+            // 2. Add https:// if the user forgot it
+            if (!target.startsWith('http')) {
+                target = 'https://' + target;
+            }
+
+            // 3. Send to your Google Script Proxy
+            // We encodeURIComponent to make sure symbols like & or ? don't break the link
+            viewer.src = PROXY_URL + "?url=" + encodeURIComponent(target);
+        }
+
+        // Allow pressing "Enter" key
+        document.getElementById('urlInput').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                loadUrl();
+            }
+        });
+
+        // ... existing code ...
+
+// === ADD THIS AT THE BOTTOM OF YOUR SCRIPT ===
+window.onload = function() {
+    // Check if a URL was passed from the homepage
+    const params = new URLSearchParams(window.location.search);
+    const site = params.get('site');
+    
+    if (site) {
+        // Fill the box and load it automatically
+        document.getElementById('urlInput').value = site;
+        loadUrl();
+    }
+}
+
+    </script>
+
+</body>
+</html>
