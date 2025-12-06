@@ -43,6 +43,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            cursor: pointer; /* Ensures it looks clickable */
         }
 
         .card:hover {
@@ -68,49 +69,57 @@
             margin-top: 10px;
         }
     </style>
-    <script src=src="js/cloaker.js"></script>
+    <!-- Make sure this path is correct! -->
+    <script src="js/cloaker.js"></script>
 </head>
 <body>
 
     <h1>Welcome!</h1>
-    <!-- QUICK SEARCH BAR -->
-<div style="margin-bottom: 30px;">
-    <input type="text" id="quickUrl" placeholder="Quick Proxy (e.g. twitch.tv)" 
-           style="padding: 12px; border-radius: 20px; border: 1px solid #ccc; width: 250px; text-align: center;">
-    <button onclick="quickGo()" 
-            style="padding: 12px 20px; border-radius: 20px; background: #2b6cb0; color: white; border: none; cursor: pointer;">
-        Go 🚀
-    </button>
-</div>
-
-<button onclick="openProxy()" style="padding: 15px 30px; font-size: 18px; cursor: pointer;">
-    Launch Browser
-</button>
-
-<script>
-    function quickGo() {
-        let url = document.getElementById('quickUrl').value;
-        if(url) {
-            // Sends the URL to the browser page
-            window.location.href = "Tools/browser.html?site=" + encodeURIComponent(url);
-        }
-    }
     
-    // Allow Enter Key
-    document.getElementById('quickUrl').addEventListener("keypress", function(event) {
-        if (event.key === "Enter") quickGo();
-    });
-</script>
+    <!-- QUICK SEARCH BAR -->
+    <div style="margin-bottom: 30px;">
+        <input type="text" id="quickUrl" placeholder="Quick Proxy (e.g. twitch.tv)" 
+               style="padding: 12px; border-radius: 20px; border: 1px solid #ccc; width: 250px; text-align: center;">
+        <button onclick="quickGo()" 
+                style="padding: 12px 20px; border-radius: 20px; background: #2b6cb0; color: white; border: none; cursor: pointer;">
+            Go 🚀
+        </button>
+    </div>
+
+    <script>
+        function quickGo() {
+            let url = document.getElementById('quickUrl').value;
+            if(url) {
+                // If you want the quick bar to ALSO use the cloaker, 
+                // you might want to change this logic later.
+                // For now, it keeps your original logic:
+                window.location.href = "Tools/browser.html?site=" + encodeURIComponent(url);
+            }
+        }
+        
+        // Allow Enter Key
+        document.getElementById('quickUrl').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") quickGo();
+        });
+    </script>
 
     <div class="menu">
-        <!-- Button 1: Sudoku -->
+        <!-- Button 1: Proxy Launcher (Moved here) -->
+        <!-- We use href="#" and onclick with return false to prevent navigation but run JS -->
+        <a href="#" onclick="openProxy(); return false;" class="card">
+            <div class="icon">🚀</div>
+            <div class="title">Browser</div>
+            <div class="description">Launch the unblocked proxy.</div>
+        </a>
+
+        <!-- Button 2: Sudoku -->
         <a href="Sudoku/index.html" class="card">
             <div class="icon">🧩</div>
             <div class="title">Sudoku</div>
             <div class="description">Play a classic game of Sudoku.</div>
         </a>
 
-        <!-- Button 2: Exam Calculator -->
+        <!-- Button 3: Exam Calculator -->
         <a href="grade-calc.html" class="card">
             <div class="icon">💯</div>
             <div class="title">Grade Calc</div>
