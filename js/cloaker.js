@@ -1,5 +1,5 @@
 function openProxy() {
-    const url = "https://proxy-shield-azksxofex-coles-projects-14e9fffe.vercel.app"; 
+    const url = "https://proxy-shield-git-main-coles-projects-14e9fffe.vercel.app/"; 
 
     if (url.includes("YOUR-APP-URL-HERE")) {
         alert("You need to set up the backend server first! Read the instructions.");
