@@ -24,14 +24,14 @@ function startGame() {
     width = level.width;
     height = level.height;
     mineCount = level.mines;
-    
+
     grid = [];
     flags = 0;
     isGameOver = false;
     isFirstClick = true;
     timeElapsed = 0;
     messageElement.innerText = "";
-    
+
     clearInterval(timer);
     timerElement.innerText = 0;
     flagsLeftElement.innerText = mineCount;
@@ -48,7 +48,7 @@ function createBoard() {
         const cell = document.createElement('div');
         cell.id = i;
         cell.classList.add('cell');
-        
+
         // Checkerboard pattern
         const row = Math.floor(i / width);
         const col = i % width;
@@ -57,45 +57,174 @@ function createBoard() {
 
         cell.addEventListener('click', () => handleClick(cell));
         cell.addEventListener('contextmenu', (e) => handleRightClick(e, cell));
-        
+
         gridElement.appendChild(cell);
-        grid.push({ element: cell, isMine: false, isRevealed: false, isFlagged: false, nearbyMines: 0 });
+        
+        // Initialize logic state
+        grid.push({ 
+            element: cell, 
+            index: i,
+            isMine: false, 
+            isRevealed: false, 
+            isFlagged: false, 
+            nearbyMines: 0 
+        });
     }
 }
 
-// Generate mines excluding the first clicked index to ensure safety
-function placeMines(excludeIndex) {
+// --- Logic Helpers ---
+
+// Get all valid neighbor indices for a specific index
+function getNeighbors(index) {
+    const neighbors = [];
+    const isLeftEdge = (index % width === 0);
+    const isRightEdge = (index % width === width - 1);
+
+    if (!isLeftEdge) neighbors.push(index - 1); // Left
+    if (!isRightEdge) neighbors.push(index + 1); // Right
+    if (index >= width) neighbors.push(index - width); // Top
+    if (index < width * (height - 1)) neighbors.push(index + width); // Bottom
+    
+    if (!isLeftEdge && index >= width) neighbors.push(index - width - 1); // Top-Left
+    if (!isRightEdge && index >= width) neighbors.push(index - width + 1); // Top-Right
+    if (!isLeftEdge && index < width * (height - 1)) neighbors.push(index + width - 1); // Bottom-Left
+    if (!isRightEdge && index < width * (height - 1)) neighbors.push(index + width + 1); // Bottom-Right
+
+    return neighbors;
+}
+
+// --- Board Generation (No Guess Logic) ---
+
+function handleFirstClick(startIndex) {
+    let attempts = 0;
+    const maxAttempts = 500; // Prevent infinite loops on Hard mode
+    let bestGrid = null;
+    let success = false;
+
+    // We define a "Safe Zone" around the start click. 
+    // This guarantees an opening of 0, creating a large open area.
+    const startNeighbors = getNeighbors(startIndex);
+    const safeZone = new Set([startIndex, ...startNeighbors]);
+
+    while (!success && attempts < maxAttempts) {
+        attempts++;
+        resetGridLogic(); // Clear previous attempt
+        placeMinesRandomly(safeZone);
+        calculateNumbers();
+
+        // Check if this board is solvable without guessing
+        if (isBoardSolvable(startIndex)) {
+            success = true;
+        }
+    }
+
+    // If we couldn't find a perfect no-guess board in time, 
+    // we use the last generated board (which is still valid, just might need a guess later).
+    // The "Safe Zone" logic ensures the start is still good.
+    console.log(`Board generated in ${attempts} attempts. Solvable: ${success}`);
+
+    startTimer();
+    revealCell(startIndex);
+    isFirstClick = false;
+}
+
+function resetGridLogic() {
+    for (let i = 0; i < grid.length; i++) {
+        grid[i].isMine = false;
+        grid[i].nearbyMines = 0;
+        grid[i].element.classList.remove('revealed', 'flagged', 'exploded');
+        grid[i].element.innerText = '';
+        grid[i].element.removeAttribute('data-num');
+    }
+}
+
+function placeMinesRandomly(safeZone) {
     let minesPlaced = 0;
     while (minesPlaced < mineCount) {
         const randomIndex = Math.floor(Math.random() * (width * height));
-        if (!grid[randomIndex].isMine && randomIndex !== excludeIndex) {
+        if (!grid[randomIndex].isMine && !safeZone.has(randomIndex)) {
             grid[randomIndex].isMine = true;
             minesPlaced++;
         }
     }
-    calculateNumbers();
 }
 
 function calculateNumbers() {
     for (let i = 0; i < grid.length; i++) {
         if (grid[i].isMine) continue;
-        let total = 0;
-        const isLeftEdge = (i % width === 0);
-        const isRightEdge = (i % width === width - 1);
-
-        // Check 8 neighbors
-        if (!isLeftEdge && grid[i - 1]?.isMine) total++; // Left
-        if (!isRightEdge && grid[i + 1]?.isMine) total++; // Right
-        if (i >= width && grid[i - width]?.isMine) total++; // Top
-        if (i < width * (height - 1) && grid[i + width]?.isMine) total++; // Bottom
-        if (!isLeftEdge && i >= width && grid[i - width - 1]?.isMine) total++; // Top-Left
-        if (!isRightEdge && i >= width && grid[i - width + 1]?.isMine) total++; // Top-Right
-        if (!isLeftEdge && i < width * (height - 1) && grid[i + width - 1]?.isMine) total++; // Bottom-Left
-        if (!isRightEdge && i < width * (height - 1) && grid[i + width + 1]?.isMine) total++; // Bottom-Right
-
-        grid[i].nearbyMines = total;
+        const neighbors = getNeighbors(i);
+        let count = 0;
+        neighbors.forEach(n => {
+            if (grid[n].isMine) count++;
+        });
+        grid[i].nearbyMines = count;
     }
 }
+
+// --- Solvability Solver ---
+// Simulates playing the game to see if it requires guessing
+function isBoardSolvable(startIndex) {
+    // Clone grid state for simulation (don't touch DOM)
+    let simGrid = grid.map(cell => ({
+        isMine: cell.isMine,
+        nearbyMines: cell.nearbyMines,
+        isRevealed: false,
+        isFlagged: false
+    }));
+    
+    let revealedCount = 0;
+    let changed = true;
+    
+    // Reveal start (Simulation)
+    const revealSim = (idx) => {
+        if (simGrid[idx].isRevealed) return;
+        simGrid[idx].isRevealed = true;
+        revealedCount++;
+        if (simGrid[idx].nearbyMines === 0) {
+            getNeighbors(idx).forEach(n => revealSim(n));
+        }
+    };
+    revealSim(startIndex);
+
+    // Iteratively apply logic rules
+    while (changed) {
+        changed = false;
+        
+        for (let i = 0; i < simGrid.length; i++) {
+            if (!simGrid[i].isRevealed || simGrid[i].nearbyMines === 0) continue;
+
+            const neighbors = getNeighbors(i);
+            const hidden = neighbors.filter(n => !simGrid[n].isRevealed);
+            const flagged = neighbors.filter(n => simGrid[n].isFlagged);
+            const hiddenUnflagged = hidden.filter(n => !simGrid[n].isFlagged);
+
+            // Rule 1: If hidden cells equals number remaining -> All are mines
+            // (nearby - flagged) == hidden unflagged count
+            if (hiddenUnflagged.length > 0 && 
+                hiddenUnflagged.length === simGrid[i].nearbyMines - flagged.length) {
+                hiddenUnflagged.forEach(n => {
+                    simGrid[n].isFlagged = true;
+                });
+                changed = true;
+            }
+
+            // Rule 2: If flagged cells equals number -> All others are safe
+            if (hiddenUnflagged.length > 0 && 
+                flagged.length === simGrid[i].nearbyMines) {
+                hiddenUnflagged.forEach(n => {
+                    revealSim(n);
+                });
+                changed = true;
+            }
+        }
+    }
+
+    // Solvable if all non-mines are revealed
+    const totalSafe = width * height - mineCount;
+    return revealedCount === totalSafe;
+}
+
+// --- Game Interactions ---
 
 function startTimer() {
     timer = setInterval(() => {
@@ -106,13 +235,14 @@ function startTimer() {
 
 function handleClick(cell) {
     const index = parseInt(cell.id);
-    if (isGameOver || grid[index].isFlagged || grid[index].isRevealed) return;
-
+    
+    // If first click, generate the board now
     if (isFirstClick) {
-        placeMines(index);
-        startTimer();
-        isFirstClick = false;
+        handleFirstClick(index);
+        return; 
     }
+
+    if (isGameOver || grid[index].isFlagged || grid[index].isRevealed) return;
 
     if (grid[index].isMine) {
         gameOver(index);
@@ -124,6 +254,8 @@ function handleClick(cell) {
 
 function handleRightClick(e, cell) {
     e.preventDefault();
+    if (isFirstClick) return; // Don't flag before game starts
+    
     const index = parseInt(cell.id);
     if (isGameOver || grid[index].isRevealed) return;
 
@@ -144,28 +276,32 @@ function handleRightClick(e, cell) {
 function revealCell(index) {
     if (index < 0 || index >= width * height || grid[index].isRevealed || grid[index].isFlagged) return;
 
-    grid[index].isRevealed = true;
-    const cell = grid[index].element;
-    cell.classList.add('revealed');
-
-    if (grid[index].nearbyMines > 0) {
-        cell.innerText = grid[index].nearbyMines;
-        cell.setAttribute('data-num', grid[index].nearbyMines);
-    } else {
-        // Flood fill empty spaces
-        const isLeftEdge = (index % width === 0);
-        const isRightEdge = (index % width === width - 1);
+    // Iterative flood fill to prevent stack overflow on large boards
+    // and to remove setTimeout delay
+    let stack = [index];
+    
+    while(stack.length > 0) {
+        let currentIdx = stack.pop();
         
-        setTimeout(() => {
-            if (!isLeftEdge) revealCell(index - 1);
-            if (!isRightEdge) revealCell(index + 1);
-            revealCell(index - width);
-            revealCell(index + width);
-            if (!isLeftEdge) revealCell(index - width - 1);
-            if (!isRightEdge) revealCell(index - width + 1);
-            if (!isLeftEdge) revealCell(index + width - 1);
-            if (!isRightEdge) revealCell(index + width + 1);
-        }, 10);
+        if(grid[currentIdx].isRevealed || grid[currentIdx].isFlagged) continue;
+
+        grid[currentIdx].isRevealed = true;
+        const cell = grid[currentIdx].element;
+        cell.classList.add('revealed');
+
+        if (grid[currentIdx].nearbyMines > 0) {
+            cell.innerText = grid[currentIdx].nearbyMines;
+            cell.setAttribute('data-num', grid[currentIdx].nearbyMines);
+            // Color coding classes could go here based on number
+        } else {
+            // If it's 0, add all neighbors to stack
+            const neighbors = getNeighbors(currentIdx);
+            neighbors.forEach(n => {
+                if(!grid[n].isRevealed && !grid[n].isFlagged) {
+                    stack.push(n);
+                }
+            });
+        }
     }
 }
 
@@ -179,6 +315,9 @@ function gameOver(index) {
         if (spot.isMine) {
             spot.element.innerText = '💣';
             spot.element.classList.add('revealed');
+        } else if (spot.isFlagged) {
+            // Wrong flag
+            spot.element.innerText = '❌'; 
         }
     });
     
@@ -203,3 +342,5 @@ function checkWin() {
 
 // Init
 startGame();
+// Add listener to dropdown to restart game on change
+difficultySelect.addEventListener('change', startGame);
