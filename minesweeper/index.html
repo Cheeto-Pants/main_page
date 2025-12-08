@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minesweeper</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Style for the Return Home Button */
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            background-color: #4a752c;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+        .home-btn:hover {
+            background-color: #3e6324;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="../index.html" class="home-btn">⬅ Return to Home</a>
+
+    <div class="game-container">
+        <div class="header">
+            <div class="controls">
+                <select id="difficulty" onchange="startGame()">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+                <button onclick="startGame()">Reset</button>
+            </div>
+            <div class="stats">
+                <div class="stat-box">🚩 <span id="flags-left">0</span></div>
+                <div class="stat-box">⏱️ <span id="timer">0</span></div>
+            </div>
+        </div>
+        
+        <div id="grid" class="grid"></div>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

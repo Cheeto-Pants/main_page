@@ -1,0 +1,91 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    user-select: none; /* Prevents text selection on clicks */
+}
+
+.game-container {
+    background: #4a752c;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    background: #4a752c;
+    color: white;
+}
+
+.controls select, .controls button {
+    padding: 5px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.stats {
+    display: flex;
+    gap: 15px;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+/* The Game Grid */
+.grid {
+    display: grid;
+    gap: 0; /* No gaps for that seamless look */
+    background: #a2d149;
+    margin: 0 auto;
+    border: 4px solid #87af3a; /* Border matching the dark grass */
+}
+
+.cell {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+/* Checkerboard Pattern for Unopened Cells */
+.cell.even { background-color: #a2d149; }
+.cell.odd { background-color: #aad751; }
+.cell:hover { filter: brightness(1.1); }
+
+/* Revealed Cells */
+.cell.revealed {
+    background-color: #e5c29f; /* Dirt color */
+}
+.cell.revealed.even { background-color: #d7b899; }
+
+/* Specific Colors for Numbers */
+.cell[data-num="1"] { color: #1976d2; }
+.cell[data-num="2"] { color: #388e3c; }
+.cell[data-num="3"] { color: #d32f2f; }
+.cell[data-num="4"] { color: #7b1fa2; }
+.cell[data-num="5"] { color: #ff8f00; }
+
+/* Mines and Flags */
+.cell.mine { background-color: #e5c29f; }
+.cell.flagged { color: #d32f2f; }
+.cell.exploded { background-color: #d32f2f !important; }
+
+.message {
+    color: white;
+    font-weight: bold;
+    height: 20px;
+    margin-top: 5px;
+}
