@@ -1,0 +1,155 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #e0e5ec; /* Softer blue-grey background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    user-select: none;
+    overflow: hidden;
+}
+
+.game-container {
+    background: #fdfdfd;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    text-align: center;
+    transform-origin: center center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 350px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.controls select, .controls button {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.controls button:hover {
+    background-color: #f0f0f0;
+}
+
+.stats {
+    font-weight: bold;
+    font-size: 1.4em;
+    color: #555;
+}
+
+/* --- KENKEN GRID --- */
+.kenken-grid {
+    display: grid;
+    margin: 0 auto;
+    border: 3px solid #000; /* Thick outer border */
+    background-color: #fff;
+    user-select: none;
+}
+
+.cell {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #333;
+    background-clip: padding-box;
+    /* Default thin borders for inner cells */
+    border-right: 1px dotted #ccc;
+    border-bottom: 1px dotted #ccc;
+    box-sizing: border-box;
+}
+
+.cell:hover {
+    background-color: #f9f9f9;
+}
+
+.cell.selected {
+    background-color: #e3f2fd; /* Light blue selection */
+}
+
+.cell.error {
+    background-color: #ffebee;
+    color: #d32f2f;
+}
+
+.cell.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+/* Cage Borders (Thick Black) */
+/* These classes are added by JS based on cage grouping */
+.border-top-thick { border-top: 3px solid #000 !important; }
+.border-bottom-thick { border-bottom: 3px solid #000 !important; }
+.border-left-thick { border-left: 3px solid #000 !important; }
+.border-right-thick { border-right: 3px solid #000 !important; }
+
+/* The Target Number & Operation (e.g., "12x") */
+.cage-label {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #000;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* --- NUMPAD --- */
+.numpad {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.num-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    background: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.1s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.num-btn:active {
+    transform: scale(0.95);
+}
+
+.num-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.message {
+    height: 30px;
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #2e7d32;
+}
