@@ -1,4 +1,5 @@
 const gridElement = document.getElementById('grid');
+const gameContainer = document.getElementById('game-container'); // We need this for scaling
 const flagsLeftElement = document.getElementById('flags-left');
 const timerElement = document.getElementById('timer');
 const difficultySelect = document.getElementById('difficulty');
@@ -17,6 +18,69 @@ const difficulties = {
     medium: { width: 18, height: 14, mines: 40 },
     hard: { width: 24, height: 20, mines: 99 }
 };
+
+// --- SCALING LOGIC ---
+function resizeGame() {
+    if (!gameContainer) return;
+
+    // Reset scale to 1 to get accurate natural dimensions
+    gameContainer.style.transform = 'scale(1)';
+
+    const padding = 40; // Safety buffer
+    const availableWidth = window.innerWidth - padding;
+    const availableHeight = window.innerHeight - padding;
+    
+    const contentWidth = gameContainer.offsetWidth;
+    const contentHeight = gameContainer.offsetHeight;
+
+    // Calculate the scale to fit whichever dimension is tighter
+    const scale = Math.min(
+        availableWidth / contentWidth,
+        availableHeight / contentHeight
+    );
+
+    // Apply scale (clamp it so it doesn't get too tiny on mobile)
+    gameContainer.style.transform = `scale(${Math.max(scale, 0.5)})`;
+}
+
+// Listen for window resizing
+window.addEventListener('resize', resizeGame);
+
+// --- DIRT PARTICLE ANIMATION ---
+function createDirtParticles(x, y) {
+    const particleCount = 8; // Number of dirt specks
+    const colors = ['#8b5a2b', '#6d4c41', '#a1887f']; // Various dirt shades
+
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        document.body.appendChild(particle);
+
+        // Random starting offset
+        const offsetX = (Math.random() - 0.5) * 10;
+        const offsetY = (Math.random() - 0.5) * 10;
+
+        particle.style.left = `${x + offsetX}px`;
+        particle.style.top = `${y + offsetY}px`;
+        particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+        // Random velocity
+        const velocityX = (Math.random() - 0.5) * 80;
+        const velocityY = (Math.random() - 1) * 80; // Bias upwards slightly
+
+        // Animate using Web Animations API
+        const animation = particle.animate([
+            { transform: `translate(0, 0) scale(1)`, opacity: 1 },
+            { transform: `translate(${velocityX}px, ${velocityY}px) scale(0)`, opacity: 0 }
+        ], {
+            duration: 400 + Math.random() * 200,
+            easing: 'cubic-bezier(0, .9, .57, 1)', // "Pop" easing
+        });
+
+        // Cleanup after animation
+        animation.onfinish = () => particle.remove();
+    }
+}
 
 // Start Game
 function startGame() {
@@ -41,6 +105,9 @@ function startGame() {
     gridElement.innerHTML = '';
 
     createBoard();
+    
+    // Recalculate size immediately after creating board
+    setTimeout(resizeGame, 0); 
 }
 
 function createBoard() {
@@ -55,12 +122,12 @@ function createBoard() {
         if ((row + col) % 2 === 0) cell.classList.add('even');
         else cell.classList.add('odd');
 
-        cell.addEventListener('click', () => handleClick(cell));
+        // Pass the event 'e' so we can get coordinates for particles
+        cell.addEventListener('click', (e) => handleClick(e, cell));
         cell.addEventListener('contextmenu', (e) => handleRightClick(e, cell));
 
         gridElement.appendChild(cell);
         
-        // Initialize logic state
         grid.push({ 
             element: cell, 
             index: i,
@@ -72,57 +139,42 @@ function createBoard() {
     }
 }
 
-// --- Logic Helpers ---
-
-// Get all valid neighbor indices for a specific index
+// Logic Helpers & Solvability
 function getNeighbors(index) {
     const neighbors = [];
     const isLeftEdge = (index % width === 0);
     const isRightEdge = (index % width === width - 1);
 
-    if (!isLeftEdge) neighbors.push(index - 1); // Left
-    if (!isRightEdge) neighbors.push(index + 1); // Right
-    if (index >= width) neighbors.push(index - width); // Top
-    if (index < width * (height - 1)) neighbors.push(index + width); // Bottom
+    if (!isLeftEdge) neighbors.push(index - 1);
+    if (!isRightEdge) neighbors.push(index + 1);
+    if (index >= width) neighbors.push(index - width);
+    if (index < width * (height - 1)) neighbors.push(index + width);
     
-    if (!isLeftEdge && index >= width) neighbors.push(index - width - 1); // Top-Left
-    if (!isRightEdge && index >= width) neighbors.push(index - width + 1); // Top-Right
-    if (!isLeftEdge && index < width * (height - 1)) neighbors.push(index + width - 1); // Bottom-Left
-    if (!isRightEdge && index < width * (height - 1)) neighbors.push(index + width + 1); // Bottom-Right
+    if (!isLeftEdge && index >= width) neighbors.push(index - width - 1);
+    if (!isRightEdge && index >= width) neighbors.push(index - width + 1);
+    if (!isLeftEdge && index < width * (height - 1)) neighbors.push(index + width - 1);
+    if (!isRightEdge && index < width * (height - 1)) neighbors.push(index + width + 1);
 
     return neighbors;
 }
 
-// --- Board Generation (No Guess Logic) ---
-
 function handleFirstClick(startIndex) {
     let attempts = 0;
-    const maxAttempts = 500; // Prevent infinite loops on Hard mode
-    let bestGrid = null;
+    const maxAttempts = 500;
     let success = false;
-
-    // We define a "Safe Zone" around the start click. 
-    // This guarantees an opening of 0, creating a large open area.
     const startNeighbors = getNeighbors(startIndex);
     const safeZone = new Set([startIndex, ...startNeighbors]);
 
     while (!success && attempts < maxAttempts) {
         attempts++;
-        resetGridLogic(); // Clear previous attempt
+        resetGridLogic();
         placeMinesRandomly(safeZone);
         calculateNumbers();
-
-        // Check if this board is solvable without guessing
         if (isBoardSolvable(startIndex)) {
             success = true;
         }
     }
-
-    // If we couldn't find a perfect no-guess board in time, 
-    // we use the last generated board (which is still valid, just might need a guess later).
-    // The "Safe Zone" logic ensures the start is still good.
-    console.log(`Board generated in ${attempts} attempts. Solvable: ${success}`);
-
+    
     startTimer();
     revealCell(startIndex);
     isFirstClick = false;
@@ -161,10 +213,7 @@ function calculateNumbers() {
     }
 }
 
-// --- Solvability Solver ---
-// Simulates playing the game to see if it requires guessing
 function isBoardSolvable(startIndex) {
-    // Clone grid state for simulation (don't touch DOM)
     let simGrid = grid.map(cell => ({
         isMine: cell.isMine,
         nearbyMines: cell.nearbyMines,
@@ -175,7 +224,6 @@ function isBoardSolvable(startIndex) {
     let revealedCount = 0;
     let changed = true;
     
-    // Reveal start (Simulation)
     const revealSim = (idx) => {
         if (simGrid[idx].isRevealed) return;
         simGrid[idx].isRevealed = true;
@@ -186,45 +234,32 @@ function isBoardSolvable(startIndex) {
     };
     revealSim(startIndex);
 
-    // Iteratively apply logic rules
     while (changed) {
         changed = false;
-        
         for (let i = 0; i < simGrid.length; i++) {
             if (!simGrid[i].isRevealed || simGrid[i].nearbyMines === 0) continue;
-
             const neighbors = getNeighbors(i);
             const hidden = neighbors.filter(n => !simGrid[n].isRevealed);
             const flagged = neighbors.filter(n => simGrid[n].isFlagged);
             const hiddenUnflagged = hidden.filter(n => !simGrid[n].isFlagged);
 
-            // Rule 1: If hidden cells equals number remaining -> All are mines
-            // (nearby - flagged) == hidden unflagged count
             if (hiddenUnflagged.length > 0 && 
                 hiddenUnflagged.length === simGrid[i].nearbyMines - flagged.length) {
-                hiddenUnflagged.forEach(n => {
-                    simGrid[n].isFlagged = true;
-                });
+                hiddenUnflagged.forEach(n => simGrid[n].isFlagged = true);
                 changed = true;
             }
 
-            // Rule 2: If flagged cells equals number -> All others are safe
             if (hiddenUnflagged.length > 0 && 
                 flagged.length === simGrid[i].nearbyMines) {
-                hiddenUnflagged.forEach(n => {
-                    revealSim(n);
-                });
+                hiddenUnflagged.forEach(n => revealSim(n));
                 changed = true;
             }
         }
     }
 
-    // Solvable if all non-mines are revealed
     const totalSafe = width * height - mineCount;
     return revealedCount === totalSafe;
 }
-
-// --- Game Interactions ---
 
 function startTimer() {
     timer = setInterval(() => {
@@ -233,16 +268,19 @@ function startTimer() {
     }, 1000);
 }
 
-function handleClick(cell) {
+// Updated handleClick to accept Event (e)
+function handleClick(e, cell) {
     const index = parseInt(cell.id);
     
-    // If first click, generate the board now
+    if (isGameOver || grid[index].isFlagged || grid[index].isRevealed) return;
+
+    // Trigger dirt animation at click coordinates
+    createDirtParticles(e.clientX, e.clientY);
+
     if (isFirstClick) {
         handleFirstClick(index);
         return; 
     }
-
-    if (isGameOver || grid[index].isFlagged || grid[index].isRevealed) return;
 
     if (grid[index].isMine) {
         gameOver(index);
@@ -254,7 +292,7 @@ function handleClick(cell) {
 
 function handleRightClick(e, cell) {
     e.preventDefault();
-    if (isFirstClick) return; // Don't flag before game starts
+    if (isFirstClick) return; 
     
     const index = parseInt(cell.id);
     if (isGameOver || grid[index].isRevealed) return;
@@ -276,13 +314,9 @@ function handleRightClick(e, cell) {
 function revealCell(index) {
     if (index < 0 || index >= width * height || grid[index].isRevealed || grid[index].isFlagged) return;
 
-    // Iterative flood fill to prevent stack overflow on large boards
-    // and to remove setTimeout delay
     let stack = [index];
-    
     while(stack.length > 0) {
         let currentIdx = stack.pop();
-        
         if(grid[currentIdx].isRevealed || grid[currentIdx].isFlagged) continue;
 
         grid[currentIdx].isRevealed = true;
@@ -292,9 +326,7 @@ function revealCell(index) {
         if (grid[currentIdx].nearbyMines > 0) {
             cell.innerText = grid[currentIdx].nearbyMines;
             cell.setAttribute('data-num', grid[currentIdx].nearbyMines);
-            // Color coding classes could go here based on number
         } else {
-            // If it's 0, add all neighbors to stack
             const neighbors = getNeighbors(currentIdx);
             neighbors.forEach(n => {
                 if(!grid[n].isRevealed && !grid[n].isFlagged) {
@@ -309,19 +341,14 @@ function gameOver(index) {
     isGameOver = true;
     clearInterval(timer);
     messageElement.innerText = "Game Over!";
-    
-    // Reveal all mines
     grid.forEach(spot => {
         if (spot.isMine) {
             spot.element.innerText = '💣';
             spot.element.classList.add('revealed');
         } else if (spot.isFlagged) {
-            // Wrong flag
             spot.element.innerText = '❌'; 
         }
     });
-    
-    // Highlight the one you clicked
     grid[index].element.classList.add('exploded');
 }
 
@@ -342,5 +369,4 @@ function checkWin() {
 
 // Init
 startGame();
-// Add listener to dropdown to restart game on change
 difficultySelect.addEventListener('change', startGame);

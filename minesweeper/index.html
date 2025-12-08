@@ -20,6 +20,7 @@
             font-weight: bold;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             transition: background 0.2s;
+            z-index: 2000; /* Ensure it stays above the scaled game */
         }
         .home-btn:hover {
             background-color: #3e6324;
@@ -30,10 +31,11 @@
 
     <a href="../index.html" class="home-btn">⬅ Return to Home</a>
 
-    <div class="game-container">
+    <!-- Added id="game-container" here so the JS can find it for scaling -->
+    <div class="game-container" id="game-container">
         <div class="header">
             <div class="controls">
-                <select id="difficulty" onchange="startGame()">
+                <select id="difficulty">
                     <option value="easy">Easy</option>
                     <option value="medium" selected>Medium</option>
                     <option value="hard">Hard</option>
